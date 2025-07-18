@@ -30,14 +30,14 @@ function generateTitleNote(input) {
   const lines = input.trim().split('\n');
 
   lines.forEach(line => {
-    const ownerMatch = line.match(/([A-Z][a-z]+\\s[A-Z][a-z]+|[A-Z][a-z]+), deceased/);
+    const ownerMatch = line.match(/([A-Z][a-z]+\s[A-Z][a-z]+|[A-Z][a-z]+), deceased/);
     if (ownerMatch && !owner) {
       owner = ownerMatch[1];
     }
 
     const deedMatch = line.match(/(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)/);
-    const bkpgMatch = line.match(/(\\d{1,4})\\s*[-\\/\\s]?(\\d{1,4})/);
-    const dateMatch = line.match(/\\b(\\d{1,2}\\/\\d{1,2}\\/\\d{2,4})\\b/);
+    const bkpgMatch = line.match(/(\d{1,4})\s*[-\/\s]?\s*(\d{1,4})/);
+    const dateMatch = line.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/);
 
     if (deedMatch && bkpgMatch) {
       const deed = deedMap[deedMatch[1]] || "Instrument";
@@ -76,7 +76,7 @@ function generateTitleNote(input) {
     output += `No production has occurred in the subject area. `;
   }
 
-  output += "\\n\\nFor the purposes of this report, the examiner has ";
+  output += "\n\nFor the purposes of this report, the examiner has ";
   output += termExpired
     ? "not credited any interest due to expiration of term interest."
     : "credited the interest based on record instruments.";
