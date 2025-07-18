@@ -59,7 +59,7 @@ function generateTitleNote(input) {
 
   lines.forEach(line => {
     const deedMatch = line.match(/\b(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)\b/);
-    const bkpgMatch = line.match(/\b(?:MD\s)?(\d{1,4})[\s\/\-](\d{1,4})\b/i);  // Fixed regex for MD + book/page
+    const bkpgMatch = line.match(/\b(?:MD\s)?(\d{1,4})[\s\/\-](\d{1,4})\b/i); // Updated regex for MD + book/page
     const dateMatch = line.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/);
     const prodMatch = line.toLowerCase().includes('no production');
     const expiredMatch = line.toLowerCase().includes('expired');
@@ -69,8 +69,12 @@ function generateTitleNote(input) {
     let book = bkpgMatch ? bkpgMatch[1] : null;
     let page = bkpgMatch ? bkpgMatch[2] : null;
 
+    // Debugging: Check what's being captured for Book and Page
+    console.log(`Line: ${line}`);
+    console.log(`Book: ${book}, Page: ${page}`);
+
     if (line.toLowerCase().includes("raymond gunn")) {
-      output += `Raymond Gunn received an interest that was referenced in a Final Decree recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
+      output += `Raymond Gunn received an interest referenced in a Final Decree recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
       if (expiredMatch) output += `The interest was term-limited and is believed to have expired. `;
       if (prodMatch) output += `No production has occurred in the subject area. `;
       output += `\n\nFor the purposes of this report, the examiner has not credited any interest due to expiration of term interest.`;
