@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 function generateTitleNote(input) {
   const deedMap = {
     QCD: "Quit Claim Deed",
@@ -84,3 +86,37 @@ function generateTitleNote(input) {
 
   return output.trim();
 }
+
+function App() {
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("");
+
+  const handleGenerate = () => {
+    const result = generateTitleNote(input);
+    setOutput(result);
+  };
+
+  return (
+    <div className="p-6 max-w-2xl mx-auto space-y-4">
+      <h1 className="text-xl font-bold">Title Note Generator</h1>
+      <textarea
+        rows={10}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Paste unstructured field notes here (e.g. 'MD 159-29 on 5/1/67 from Redfords...')"
+        className="w-full border rounded p-2 text-sm"
+      />
+      <button
+        onClick={handleGenerate}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+      >
+        Generate Title Note
+      </button>
+      <div className="whitespace-pre-wrap bg-gray-100 text-sm p-4 rounded border">
+        {output}
+      </div>
+    </div>
+  );
+}
+
+export default App;
