@@ -1,5 +1,12 @@
 import { useState } from "react";
 
+function formatDate(dateStr) {
+  const [month, day, year] = dateStr.split('/');
+  const fullYear = year.length === 2 ? (parseInt(year) < 25 ? '20' + year : '19' + year) : year;
+  const dateObj = new Date(`${fullYear}-${month}-${day}`);
+  return dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 function generateTitleNote(input) {
   const deedMap = {
     QCD: "Quit Claim Deed",
@@ -13,61 +20,57 @@ function generateTitleNote(input) {
     FD: "Final Decree"
   };
 
-  function formatDate(dateStr) {
-    const [month, day, year] = dateStr.split("/");
-    const fullYear = year.length === 2 ? (parseInt(year) < 25 ? "20" + year : "19" + year) : year;
-    const dateObj = new Date(`${fullYear}-${month}-${day}`);
-    return dateObj.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-  }
-
   let output = "";
-  const lines = input.trim().split("\n");
+  const lines = input.trim().split('\n');
 
-  let hasFD = false;
-  let hasExpired = false;
-  let hasProduction = false;
-  let subject = "";
-
-  lines.forEach((line) => {
-    const deedMatch = line.match(/\b(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)\b/);
-    const bkpgMatch = line.match(/(\d{1,4})[-\/](\d{1,4})/);
+  lines.forEach(line => {
+    const deedMatch = line.match(/(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)/);
+    const bkpgMatch = line.match(/(\d{1,4})[\/\s-](\d{1,4})/);
     const dateMatch = line.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/);
-    const termMatch = line.toLowerCase().includes("term");
-    const prodMatch = line.toLowerCase().includes("no production");
-    const expiredMatch = line.toLowerCase().includes("expired");
-    const nameMatch = line.match(/([A-Z][a-z]+ [A-Z][a-z]+)/);
+    const tractMatch = line.match(/Tract\s*(\d+)/i);
+    const termMatch = line.toLowerCase().includes('term');
+    const prodMatch = line.toLowerCase().includes('no production');
+    const expiredMatch = line.toLowerCase().includes('expired');
+    const overConvMatch = line.toLowerCase().includes('over-conveyance');
 
-    if (nameMatch && !subject) subject = nameMatch[1];
+    const formattedDate = dateMatch ? formatDate(dateMatch[1]) : "an unknown date";
 
-    if (deedMatch && deedMatch[1] === "FD" && bkpgMatch && dateMatch) {
-      hasFD = true;
+    if (deedMatch && bkpgMatch) {
       const [_, book, page] = bkpgMatch;
-      const formattedDate = formatDate(dateMatch[1]);
-      output += `Final Decree recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
+      const deedFull = deedMap[deedMatch[1]] || "Instrument";
+
+      if (deedMatch[1] === "FD") {
+        output += `${deedFull} was entered in Book ${book}, Page ${page}, dated ${formattedDate}. `;
+        output += `Probate records reference the same interest. `;
+      } else {
+        output += `${deedFull} recorded in Book ${book}, Page ${page}, dated ${formattedDate}, was used to convey interest. `;
+      }
     }
 
-    if (termMatch && expiredMatch) hasExpired = true;
-    if (prodMatch) hasProduction = true;
+    if (termMatch && expiredMatch) {
+      output += `The interest was term-limited and is believed to have expired. `;
+    }
+
+    if (prodMatch) {
+      output += `No production has occurred in the subject area. `;
+    }
+
+    if (overConvMatch) {
+      output += `There appears to be a potential over-conveyance due to lack of full ownership. `;
+    }
   });
 
-  if (hasFD && hasExpired) {
-    output += `Probate records reference the same interest. `;
-    output += `The interest was term-limited beginning on March 7, 1988, and is believed to have expired. `;
+  output += "\n\nFor the purposes of this report, the examiner has ";
+  if (output.toLowerCase().includes("expired")) {
+    output += "not credited any interest due to expiration of term interest.";
+  } else {
+    output += "credited the interest based on record instruments.";
   }
-
-  if (hasProduction) {
-    output += `No production has occurred in the subject area. `;
-  }
-
-  output += `\n\nFor the purposes of this report, the examiner has `;
-  output += hasExpired
-    ? `not credited any interest due to expiration of term interest.`
-    : `credited the interest based on record instruments.`;
 
   return output.trim();
 }
 
-function App() {
+export default function App() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
 
@@ -77,29 +80,29 @@ function App() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-4">
-      <h1 className="text-xl font-bold">Title Note Generator</h1>
+    <div className="p-6 max-w-3xl mx-auto">
+      <h1 className="text-xl font-semibold mb-4">Title Note Generator</h1>
 
       <textarea
-        rows={10}
+        rows={8}
+        className="w-full p-3 border border-gray-300 rounded text-sm"
+        placeholder="Paste raw field notes here..."
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Paste unstructured field notes here (e.g. 'MD 159-29 on 5/1/67 from Redfords...')"
-        className="w-full border border-gray-300 rounded p-2 text-sm"
       />
 
       <button
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         onClick={handleGenerate}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
       >
         Generate Title Note
       </button>
 
-      <div className="whitespace-pre-wrap bg-gray-100 text-sm p-4 rounded border">
-        {output}
-      </div>
+      {output && (
+        <div className="mt-6 p-4 bg-gray-100 border border-gray-300 rounded text-sm whitespace-pre-wrap">
+          {output}
+        </div>
+      )}
     </div>
   );
 }
-
-export default App;
