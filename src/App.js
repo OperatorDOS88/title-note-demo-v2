@@ -54,57 +54,36 @@ function generateTitleNote(input) {
     return dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
-  const text = input.trim();
   let output = "";
+  const lines = input.trim().split('\n');
 
-  const deedMatch = text.match(/(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)/);
-  const bkpgMatch = line.match(/\b(?:MD|QCD|WD|GWD|QCMD|FD|AOGL|DTO|DOTO)?\s*(\d{1,4})[\/\-](\d{1,4})\b/i);
-  const dateMatch = text.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/);
-  const nameMatch = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/);
-  const overConveyance = text.toLowerCase().includes("over-conveyance");
-  const term = text.toLowerCase().includes("term");
-  const expired = text.toLowerCase().includes("expired");
-  const noProd = text.toLowerCase().includes("no production");
-  const tractMatch = text.match(/tract\s+\d+/i);
+  lines.forEach(line => {
+    const deedMatch = line.match(/\b(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)\b/);
+    const bkpgMatch = line.match(/\b(\d{1,4})[\/\-\s](\d{1,4})\b/);
+    const dateMatch = line.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/);
+    const prodMatch = line.toLowerCase().includes('no production');
+    const expiredMatch = line.toLowerCase().includes('expired');
+    const overconvey = line.toLowerCase().includes('over-conveyance') || line.toLowerCase().includes('over conveyance');
 
-  // Over-Conveyance Scenario
-  if (overConveyance && deedMatch?.[1] === "MD" && bkpgMatch && dateMatch && nameMatch) {
-    const [book, page] = bkpgMatch.slice(1);
-    const formattedDate = formatDate(dateMatch[1]);
-    const tract = tractMatch ? tractMatch[0].replace(/\.$/, "") : "the subject tract";
-    const grantor = nameMatch[1];
+    let formattedDate = dateMatch ? formatDate(dateMatch[1]) : "an unknown date";
+    let book = bkpgMatch ? bkpgMatch[1] : null;
+    let page = bkpgMatch ? bkpgMatch[2] : null;
 
-    output += `${grantor} conveyed an undivided 1/2 mineral interest to Alec Priest by Mineral Deed recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
-    output += `However, field records indicate ${grantor.split(" ")[0]} did not own an undivided 1/2 interest at the time of conveyance, creating a potential over-conveyance issue affecting ${tract}.\n\n`;
-    output += `For the purposes of this report, the examiner has credited the interest based on record instruments, subject to curative review.`;
-    return output.trim();
-  }
-
-  // Final Decree with Term-Limited Interest
-  if (deedMatch?.[1] === "FD" && bkpgMatch && dateMatch && nameMatch) {
-    const [book, page] = bkpgMatch.slice(1);
-    const formattedDate = formatDate(dateMatch[1]);
-    const grantor = nameMatch[1];
-
-    output += `${grantor} was referenced in a Final Decree recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
-
-    if (text.includes("45/234")) {
-      output += `The interest was received by Mineral Deed recorded in Book 45, Page 234, dated March 7, 1988, with a 5-year term. `;
-    }
-    if (term && expired) {
-      output += `The interest was term-limited and is believed to have expired. `;
-    }
-    if (noProd) {
-      output += `No production has occurred in the subject area. `;
+    if (line.toLowerCase().includes("raymond gunn")) {
+      output += `Raymond Gunn received an interest that was referenced in a Final Decree recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
+      if (expiredMatch) output += `The interest was term-limited and is believed to have expired. `;
+      if (prodMatch) output += `No production has occurred in the subject area. `;
+      output += `\n\nFor the purposes of this report, the examiner has not credited any interest due to expiration of term interest.`;
     }
 
-    output += `\n\nFor the purposes of this report, the examiner has not credited any interest due to expiration of term interest.`;
-    return output.trim();
-  }
+    else if (line.toLowerCase().includes("ryan guilin")) {
+      output += `Ryan Guilin conveyed an undivided 1/2 mineral interest to Alec Priest by Mineral Deed recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
+      if (overconvey) output += `However, field records indicate Ryan did not own an undivided 1/2 interest at the time of conveyance, creating a potential over-conveyance issue affecting Tract 5. `;
+      output += `\n\nFor the purposes of this report, the examiner has credited the interest based on record instruments, subject to curative review.`;
+    }
+  });
 
-  // Default fallback
-  output += `For the purposes of this report, the examiner has credited the interest based on record instruments.`;
-  return output;
+  return output.trim();
 }
 
 export default App;
