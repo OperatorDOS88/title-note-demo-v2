@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 function generateTitleNote(input) {
   const deedMap = {
     QCD: "Quit Claim Deed",
@@ -43,7 +41,7 @@ function generateTitleNote(input) {
       const deed = deedMap[deedMatch[1]] || "Instrument";
       const [_, book, page] = bkpgMatch;
       const date = dateMatch ? formatDate(dateMatch[1]) : "an unknown date";
-      instruments.push({ deed, book, page, date, raw: line });
+      instruments.push({ deed, book, page, date, isFD: deed === "Final Decree" });
     }
 
     if (line.toLowerCase().includes("term") && dateMatch) {
@@ -58,14 +56,17 @@ function generateTitleNote(input) {
     output += `${owner} received `;
   }
 
-  instruments.forEach((inst, idx) => {
-    if (idx === 0 && owner) {
-      output += `an interest by ${inst.deed} recorded in Book ${inst.book}, Page ${inst.page}, dated ${inst.date}. `;
-    } else {
-      output += `${inst.deed} recorded in Book ${inst.book}, Page ${inst.page}, dated ${inst.date}, `;
-      output += inst.deed === "Final Decree" ? "was entered as a Final Decree. " : "was used to convey interest. ";
-    }
-  });
+  const origin = instruments.find(inst => !inst.isFD);
+  const fd = instruments.find(inst => inst.isFD);
+
+  if (origin) {
+    output += `a term mineral interest by ${origin.deed} recorded in Book ${origin.book}, Page ${origin.page}, dated ${origin.date}. `;
+  }
+
+  if (fd) {
+    output += `A Final Decree was entered in Book ${fd.book}, Page ${fd.page}, dated ${fd.date}. `;
+    output += `Probate records reference the same interest. `;
+  }
 
   if (termStartDate) {
     output += `The interest was term-limited beginning on ${termStartDate}`;
@@ -83,37 +84,3 @@ function generateTitleNote(input) {
 
   return output.trim();
 }
-
-function App() {
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState("");
-
-  const handleGenerate = () => {
-    const result = generateTitleNote(input);
-    setOutput(result);
-  };
-
-  return (
-    <div className="p-6 max-w-2xl mx-auto space-y-4">
-      <h1 className="text-xl font-bold">Title Note Generator</h1>
-      <textarea
-        rows={10}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Paste unstructured field notes here (e.g. 'MD 159-29 on 5/1/67 from Redfords...')"
-        className="w-full border rounded p-2 text-sm"
-      />
-      <button
-        onClick={handleGenerate}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-      >
-        Generate Title Note
-      </button>
-      <div className="whitespace-pre-wrap bg-gray-100 text-sm p-4 rounded border">
-        {output}
-      </div>
-    </div>
-  );
-}
-
-export default App;
