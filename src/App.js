@@ -69,6 +69,10 @@ function generateTitleNote(input) {
     let book = bkpgMatch ? bkpgMatch[1] : null;
     let page = bkpgMatch ? bkpgMatch[2] : null;
 
+    // Check if we're getting book/page correctly
+    console.log(`Line: ${line}`);
+    console.log(`Book: ${book}, Page: ${page}`);
+
     if (line.toLowerCase().includes("raymond gunn")) {
       output += `Raymond Gunn received an interest that was referenced in a Final Decree recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
       if (expiredMatch) output += `The interest was term-limited and is believed to have expired. `;
