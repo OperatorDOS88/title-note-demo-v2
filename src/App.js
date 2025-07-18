@@ -59,8 +59,7 @@ function generateTitleNote(input) {
 
   lines.forEach(line => {
     const deedMatch = line.match(/\b(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)\b/);
-    // Fixed regex to capture MD + Book/Page correctly (MD 45/98 or MD 45 98)
-    const bkpgMatch = line.match(/\b(?:MD\s)?(\d{1,4})[\s\/\-](\d{1,4})\b/i);  
+    const bkpgMatch = line.match(/\b(?:MD\s)?(\d{1,4})[\s\/\-](\d{1,4})\b/i);  // Updated regex for MD + book/page
     const dateMatch = line.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/);
     const prodMatch = line.toLowerCase().includes('no production');
     const expiredMatch = line.toLowerCase().includes('expired');
@@ -70,7 +69,7 @@ function generateTitleNote(input) {
     let book = bkpgMatch ? bkpgMatch[1] : null;
     let page = bkpgMatch ? bkpgMatch[2] : null;
 
-    // Check if we're capturing Book/Page correctly
+    // Debugging: Check if we're capturing Book/Page correctly
     console.log(`Line: ${line}`);
     console.log(`Book: ${book}, Page: ${page}`);
 
