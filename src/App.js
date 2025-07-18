@@ -1,10 +1,34 @@
 import { useState } from "react";
 
-function formatDate(dateStr) {
-  const [month, day, year] = dateStr.split('/');
-  const fullYear = year.length === 2 ? (parseInt(year) < 25 ? '20' + year : '19' + year) : year;
-  const dateObj = new Date(`${fullYear}-${month}-${day}`);
-  return dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+function App() {
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("");
+
+  const handleGenerate = () => {
+    const result = generateTitleNote(input);
+    setOutput(result);
+  };
+
+  return (
+    <div style={{ maxWidth: "800px", margin: "auto", padding: "2rem" }}>
+      <textarea
+        rows={10}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Enter shorthand title notes here..."
+        style={{ width: "100%", padding: "1rem", fontSize: "1rem" }}
+      />
+      <button
+        onClick={handleGenerate}
+        style={{ marginTop: "1rem", padding: "0.5rem 1rem", fontSize: "1rem" }}
+      >
+        Generate Title Note
+      </button>
+      <pre style={{ marginTop: "2rem", whiteSpace: "pre-wrap", background: "#f9f9f9", padding: "1rem", borderRadius: "5px" }}>
+        {output}
+      </pre>
+    </div>
+  );
 }
 
 function generateTitleNote(input) {
@@ -20,49 +44,65 @@ function generateTitleNote(input) {
     FD: "Final Decree"
   };
 
+  const lines = input.trim().split("\n");
   let output = "";
-  const lines = input.trim().split('\n');
+  let foundExpired = false;
+  let foundOverconvey = false;
 
-  lines.forEach(line => {
+  lines.forEach((line) => {
     const deedMatch = line.match(/(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)/);
-    const bkpgMatch = line.match(/(\d{1,4})[\/\s-](\d{1,4})/);
-    const dateMatch = line.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/);
+    const bkpgMatch = line.match(/(\d{1,4})[\/\-\s](\d{1,4})/);
+    const dateMatch = line.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/);
+    const grantorMatch = line.match(/^(.*?)\s(conveyed|received)/i);
     const tractMatch = line.match(/Tract\s*(\d+)/i);
-    const termMatch = line.toLowerCase().includes('term');
-    const prodMatch = line.toLowerCase().includes('no production');
-    const expiredMatch = line.toLowerCase().includes('expired');
-    const overConvMatch = line.toLowerCase().includes('over-conveyance');
 
-    const formattedDate = dateMatch ? formatDate(dateMatch[1]) : "an unknown date";
+    const hasExpired = line.toLowerCase().includes("expired");
+    const hasTerm = line.toLowerCase().includes("term");
+    const hasNoProduction = line.toLowerCase().includes("no production");
+    const overConvey = line.toLowerCase().includes("did not own") || line.toLowerCase().includes("didn't have");
 
-    if (deedMatch && bkpgMatch) {
+    if (bkpgMatch && deedMatch && dateMatch) {
+      const deedCode = deedMatch[1];
+      const deedFull = deedMap[deedCode] || "Instrument";
       const [_, book, page] = bkpgMatch;
-      const deedFull = deedMap[deedMatch[1]] || "Instrument";
+      const [__, mm, dd, yyyy] = dateMatch;
+      const fullYear = yyyy.length === 2 ? (parseInt(yyyy) < 25 ? "20" + yyyy : "19" + yyyy) : yyyy;
+      const formattedDate = new Date(`${fullYear}-${mm}-${dd}`).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
 
-      if (deedMatch[1] === "FD") {
-        output += `${deedFull} was entered in Book ${book}, Page ${page}, dated ${formattedDate}. `;
-        output += `Probate records reference the same interest. `;
+      if (grantorMatch && deedCode === "MD") {
+        output += `${grantorMatch[1]} conveyed an undivided interest by Mineral Deed recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
+      } else if (grantorMatch && deedCode === "FD") {
+        output += `${grantorMatch[1]} was referenced in a Final Decree recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
       } else {
-        output += `${deedFull} recorded in Book ${book}, Page ${page}, dated ${formattedDate}, was used to convey interest. `;
+        output += `${deedFull} recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
       }
     }
 
-    if (termMatch && expiredMatch) {
+    if (hasTerm && hasExpired) {
+      foundExpired = true;
       output += `The interest was term-limited and is believed to have expired. `;
     }
 
-    if (prodMatch) {
+    if (hasNoProduction) {
       output += `No production has occurred in the subject area. `;
     }
 
-    if (overConvMatch) {
-      output += `There appears to be a potential over-conveyance due to lack of full ownership. `;
+    if (overConvey) {
+      foundOverconvey = true;
+      const tract = tractMatch ? ` affecting Tract ${tractMatch[1]}` : "";
+      output += `However, field records indicate the grantor did not own the full interest at the time of conveyance, creating a potential over-conveyance issue${tract}. `;
     }
   });
 
   output += "\n\nFor the purposes of this report, the examiner has ";
-  if (output.toLowerCase().includes("expired")) {
+  if (foundExpired) {
     output += "not credited any interest due to expiration of term interest.";
+  } else if (foundOverconvey) {
+    output += "credited the interest based on record instruments, subject to curative review.";
   } else {
     output += "credited the interest based on record instruments.";
   }
@@ -70,39 +110,4 @@ function generateTitleNote(input) {
   return output.trim();
 }
 
-export default function App() {
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState("");
-
-  const handleGenerate = () => {
-    const result = generateTitleNote(input);
-    setOutput(result);
-  };
-
-  return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-xl font-semibold mb-4">Title Note Generator</h1>
-
-      <textarea
-        rows={8}
-        className="w-full p-3 border border-gray-300 rounded text-sm"
-        placeholder="Paste raw field notes here..."
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-
-      <button
-        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        onClick={handleGenerate}
-      >
-        Generate Title Note
-      </button>
-
-      {output && (
-        <div className="mt-6 p-4 bg-gray-100 border border-gray-300 rounded text-sm whitespace-pre-wrap">
-          {output}
-        </div>
-      )}
-    </div>
-  );
-}
+export default App;
