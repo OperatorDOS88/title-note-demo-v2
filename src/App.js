@@ -58,7 +58,7 @@ function generateTitleNote(input) {
   let output = "";
 
   const deedMatch = text.match(/(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)/);
-  const bkpgMatch = line.match(/\b(?:MD|QCD|WD|GWD|QCMD)?\s*(\d{1,4})\s*[/\-]\s*(\d{1,4})\b/);
+  const bkpgMatch = text.match(/\b(?:MD|QCD|WD|GWD|QCMD)?\s*(\d{1,4})\s*[/\-]\s*(\d{1,4})\b/);
   const dateMatch = text.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/);
   const nameMatch = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/);
   const overConveyance = text.toLowerCase().includes("over-conveyance");
