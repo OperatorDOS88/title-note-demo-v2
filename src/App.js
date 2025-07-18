@@ -59,8 +59,7 @@ function generateTitleNote(input) {
 
   lines.forEach(line => {
     const deedMatch = line.match(/\b(QCD|MD|AOGL|DTO|DOTO|WD|GWD|QCMD|FD)\b/);
-    // Fixed regex to capture MD and Book/Page correctly
-    const bkpgMatch = line.match(/\b(?:MD\s)?(\d{1,4})[\s\/\-](\d{1,4})\b/i);  
+    const bkpgMatch = line.match(/\b(?:MD\s)?(\d{1,4})[\s\/\-](\d{1,4})\b/i);  // Fixed regex for MD + book/page
     const dateMatch = line.match(/\b(\d{1,2}\/\d{1,2}\/\d{2,4})\b/);
     const prodMatch = line.toLowerCase().includes('no production');
     const expiredMatch = line.toLowerCase().includes('expired');
@@ -69,10 +68,6 @@ function generateTitleNote(input) {
     let formattedDate = dateMatch ? formatDate(dateMatch[1]) : "an unknown date";
     let book = bkpgMatch ? bkpgMatch[1] : null;
     let page = bkpgMatch ? bkpgMatch[2] : null;
-
-    // Debugging: check if we're capturing book and page properly
-    console.log(`Line: ${line}`);
-    console.log(`Book: ${book}, Page: ${page}`);
 
     if (line.toLowerCase().includes("raymond gunn")) {
       output += `Raymond Gunn received an interest that was referenced in a Final Decree recorded in Book ${book}, Page ${page}, dated ${formattedDate}. `;
