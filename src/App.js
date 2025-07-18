@@ -54,15 +54,11 @@ function generateTitleNote(input) {
     if (line.toLowerCase().includes("no production")) noProduction = true;
   });
 
-  if (owner) {
-    output += `${owner} received `;
-  }
-
   const origin = instruments.find(inst => !inst.isFD);
   const fd = instruments.find(inst => inst.isFD);
 
-  if (origin) {
-    output += `a term mineral interest by ${origin.deed} recorded in Book ${origin.book}, Page ${origin.page}, dated ${origin.date}. `;
+  if (owner && origin) {
+    output += `${owner} received a term mineral interest by ${origin.deed} recorded in Book ${origin.book}, Page ${origin.page}, dated ${origin.date}. `;
   }
 
   if (fd) {
